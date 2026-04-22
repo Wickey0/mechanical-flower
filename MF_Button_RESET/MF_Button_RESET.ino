@@ -15,8 +15,8 @@ const int buttonPin = 3;
 
 
 const int SERVO_STOP_DEG  = 90;   // Stopped
-const int SERVO_OPEN_DEG  = 170;  // Rotate Right / Move Up (Opening speed)
-const int SERVO_CLOSE_DEG = 10;   // Rotate Left / Move Down (Closing speed)
+const int SERVO_OPEN_DEG  = 135;  // Rotate Right / Move Up (Opening speed)
+const int SERVO_CLOSE_DEG = 45;   // Rotate Left / Move Down (Closing speed)
 
 enum ServoState {
   ROTATING_RIGHT,   
