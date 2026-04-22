@@ -10,12 +10,13 @@ Mechanical Flower - Button Reset
 Servo servo;
 
 //Parameter Definitions
-const int servoPin = 2;       
+const int servoPin = 5;       
 const int buttonPin = 3;      
 
-const int SPEED_STOP  = 1500; 
-const int SPEED_LEFT  = 1300;   // flower close
-const int SPEED_RIGHT = 1900;   // flower open
+
+const int SERVO_STOP_DEG  = 90;   // Stopped
+const int SERVO_OPEN_DEG  = 170;  // Rotate Right / Move Up (Opening speed)
+const int SERVO_CLOSE_DEG = 10;   // Rotate Left / Move Down (Closing speed)
 
 enum ServoState {
   ROTATING_RIGHT,   
@@ -41,7 +42,7 @@ void setup() {
   pinMode(buttonPin, INPUT_PULLUP);
   
   // Initial action: Stop the servo
-  servo.writeMicroseconds(SPEED_STOP);
+  servo.write(SERVO_STOP_DEG);
   currentState = STOPPED;
   
   Serial.begin(9600);
@@ -72,7 +73,7 @@ void loop() {
           
           if (clickCount >= 1) { 
             currentState = STOPPED;
-            servo.writeMicroseconds(SPEED_STOP); 
+            servo.write(SERVO_STOP_DEG); 
             clickCount = 0;
           }
         } 
@@ -83,19 +84,19 @@ void loop() {
           if (currentState == ROTATING_RIGHT) {
             // Currently Rotating Right -> Switch to Left
             currentState = ROTATING_LEFT;
-            servo.writeMicroseconds(SPEED_LEFT); // Send 1100
+            servo.write(SERVO_CLOSE_DEG); // Send 1100
             Serial.println("Switched to: LEFT");
             
           } else if (currentState == ROTATING_LEFT) {
             // Currently Rotating Left -> Switch to Right
             currentState = ROTATING_RIGHT;
-            servo.writeMicroseconds(SPEED_RIGHT); // Send 1900
+            servo.write(SERVO_OPEN_DEG); // Send 1900
             Serial.println("Switched to: RIGHT");
             
           } else if (currentState == STOPPED) {
             // Currently Stopped -> Default start to Right
             currentState = ROTATING_RIGHT;
-            servo.writeMicroseconds(SPEED_RIGHT); // Send 1900
+            servo.write(SERVO_OPEN_DEG); // Send 1900
             Serial.println("Started: Resuming RIGHT");
           }
         }
