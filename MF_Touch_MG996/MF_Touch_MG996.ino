@@ -9,17 +9,17 @@ Mechanical Flower - Touch Sensor Control
 #include <Servo.h>
 #include <EEPROM.h>  
 
-const int SERVO_PIN    = 2;  
-const int TOUCH_PIN    = 5;  
+const int SERVO_PIN    = 5;  
+const int TOUCH_PIN    = 6;  
 const int RESET_PIN    = 4;  
 
 Servo flowerServo; 
-const int SERVO_STOP_US  = 1500;  
-const int SERVO_OPEN_US  = 1900;  
-const int SERVO_CLOSE_US = 1100;  
+const int SERVO_STOP_DEG  = 90;   // Stopped
+const int SERVO_OPEN_DEG  = 135;  // Rotate Right / Move Up (Opening speed)
+const int SERVO_CLOSE_DEG = 45;   // Rotate Left / Move Down (Closing speed)
 
-const unsigned long OPEN_DURATION  = 27000;  // Time to fully open (ms)
-const unsigned long CLOSE_DURATION = 29000;  // Time to fully close (ms)
+const unsigned long OPEN_DURATION  = 9000;  // Time to fully open (ms)
+const unsigned long CLOSE_DURATION = 9000;  // Time to fully close (ms)
 
 bool isRunning = false;    
 bool isTouching = false;   
@@ -49,8 +49,7 @@ const long SAVE_INTERVAL = 200; //EEPROM save interval
 
 void setup() {
   flowerServo.attach(SERVO_PIN);
-  flowerServo.writeMicroseconds(SERVO_STOP_US); 
-  
+  flowerServo.write(SERVO_STOP_DEG); 
   pinMode(TOUCH_PIN, INPUT); 
   pinMode(RESET_PIN, INPUT_PULLUP);
   
@@ -81,6 +80,7 @@ void loop() {
 
   // D4 Reset Button 
   bool resetPressed = (digitalRead(RESET_PIN) == LOW); 
+  
   if(resetPressed && (now - resetDebounce > RESET_DELAY) && !resetBtnFlag){
     resetBtnFlag = true;
     resetDebounce = now;
@@ -95,7 +95,7 @@ void loop() {
     saveData.time = 0;
     EEPROM.put(EEPROM_ADDR, saveData);
     
-    flowerServo.writeMicroseconds(SERVO_STOP_US);
+    flowerServo.write(SERVO_STOP_DEG);
     Serial.println("[SYSTEM RESET] State cleared. Servo Stopped."); 
   }else if(!resetPressed){
     resetBtnFlag = false;
@@ -120,7 +120,7 @@ void loop() {
     // Release: Stop Immediately 
     if(isRunning || isTouching){
        // Servo stops immediately upon release
-       flowerServo.writeMicroseconds(SERVO_STOP_US);
+       flowerServo.write(SERVO_STOP_DEG);
        isRunning = false;
        isTouching = false;
        phaseTimeBase = 0;
@@ -141,7 +141,7 @@ void loop() {
     
     // Opening Phase 
     if(workPhase == 1){
-      flowerServo.writeMicroseconds(SERVO_OPEN_US);
+      flowerServo.write(SERVO_OPEN_DEG);
       currentPhaseTime += deltaTime;
       
       if(currentPhaseTime >= OPEN_DURATION){
@@ -152,7 +152,7 @@ void loop() {
     }
     // Closing Phase
     else if(workPhase == 2){
-      flowerServo.writeMicroseconds(SERVO_CLOSE_US);
+      flowerServo.write(SERVO_CLOSE_DEG);
       currentPhaseTime += deltaTime;
       
       if(currentPhaseTime >= CLOSE_DURATION){
