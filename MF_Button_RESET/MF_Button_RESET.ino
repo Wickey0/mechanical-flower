@@ -11,7 +11,7 @@ Servo servo;
 
 //Parameter Definitions
 const int servoPin = 5;       
-const int buttonPin = 2;      
+const int buttonPin = 3;      
 
 
 const int SERVO_STOP_DEG  = 90;   // Stopped
