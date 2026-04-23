@@ -7,27 +7,28 @@ Mechanical Flower - LDR Control
 - Reset button (D4) to clear the state when flower fully close.
 - EEPROM support: Resumes state after power loss.
 - Rotate Right, Flower Open; Rotate Left, Flower Close.
+- During test, check whether Light Thresholds Value is reasonable under your test environment.
  */
 
 #include <Servo.h>
 #include <EEPROM.h>  
 
-const int SERVO_PIN    = 2;  
-const int PHOTO_SW_PIN = 3;  
-const int RESET_PIN    = 4;  
+const int SERVO_PIN    = 5;   
+const int PHOTO_SW_PIN = 3;  // button 
+const int RESET_PIN    = 4;  // button
 const int PHOTO_PIN    = A0; 
 
 Servo Servo_MG996R;
-const int SERVO_STOP_US  = 1500;  
-const int SERVO_OPEN_US  = 1900;  
-const int SERVO_CLOSE_US = 1100;  
+const int SERVO_STOP_DEG  = 90;   // Stopped
+const int SERVO_OPEN_DEG  = 135;  // Rotate Right / Move Up (Opening speed)
+const int SERVO_CLOSE_DEG = 45;   // Rotate Left / Move Down (Closing speed)
 
-const unsigned long OPEN_TOTAL_MS  = 30000;  // Opening takes 30 seconds
-const unsigned long CLOSE_TOTAL_MS = 32000;  // Closing takes 32 seconds
+const unsigned long OPEN_TOTAL_MS  = 9000;  // Opening takes 9 seconds
+const unsigned long CLOSE_TOTAL_MS = 9000;  // Closing takes 9 seconds
 
 //Light Thresholds 
-const int THRESH_OPEN  = 220; 
-const int THRESH_CLOSE = 270; 
+const int THRESH_OPEN  = 500; //!!Change After readvalue!!
+const int THRESH_CLOSE = 600; 
 
 // Internal Variables 
 bool isPhotoEnable = false;   
@@ -44,7 +45,7 @@ const int EEPROM_ADDR = 0;
 
 void setup() {
   Servo_MG996R.attach(SERVO_PIN);
-  Servo_MG996R.writeMicroseconds(SERVO_STOP_US);
+  Servo_MG996R.write(SERVO_STOP_DEG);
   
   pinMode(PHOTO_SW_PIN, INPUT_PULLUP);
   pinMode(RESET_PIN, INPUT_PULLUP);
@@ -78,7 +79,7 @@ void loop() {
     currentPos = 0;
     saveData.savedPos = 0;
     EEPROM.put(EEPROM_ADDR, saveData);
-    Servo_MG996R.writeMicroseconds(SERVO_STOP_US);
+    Servo_MG996R.write(SERVO_STOP_DEG);
     isPhotoEnable = false;
     Serial.println(" >> Forced Reset Triggered. Position Zeroed.");
   }else if(!resetBtnState) resetBtnFlag = false;
@@ -89,10 +90,10 @@ void loop() {
     photoSwFlag = true;
     photoSwDebounce = millis();
     isPhotoEnable = !isPhotoEnable;  
-    if(isPhotoEnable) Serial.println(" >> Touch Sensor ENABLED");
+    if(isPhotoEnable) Serial.println(" >> Light Sensor ENABLED");
     else {
-      Servo_MG996R.writeMicroseconds(SERVO_STOP_US);
-      Serial.println(" >> Touch Sensor DISABLED");
+      Servo_MG996R.write(SERVO_STOP_DEG);
+      Serial.println(" >> Light Sensor DISABLED");
     }
   }else if(!photoSwState) photoSwFlag = false;
 
@@ -103,14 +104,14 @@ void loop() {
     // Scene 1: OPENING 
     if(photoVal < THRESH_OPEN){
       if(currentPos < OPEN_TOTAL_MS){
-        Servo_MG996R.writeMicroseconds(SERVO_OPEN_US);
+        Servo_MG996R.write(SERVO_OPEN_DEG);
         currentPos += elapsed; 
         
         // Display using currentPos directly 
         if(currentPos % 500 < 50) printStatus("OPENING", photoVal, currentPos, OPEN_TOTAL_MS); 
       } else {
         // Reached Top
-        Servo_MG996R.writeMicroseconds(SERVO_STOP_US);
+        Servo_MG996R.write(SERVO_STOP_DEG);
         
         if (currentPos != OPEN_TOTAL_MS) {
            Serial.println(" >> Opening Complete. Holding Position.");
@@ -123,7 +124,7 @@ void loop() {
     else if(photoVal > THRESH_CLOSE){
       
       if(currentPos > 0){
-        Servo_MG996R.writeMicroseconds(SERVO_CLOSE_US);
+        Servo_MG996R.write(SERVO_CLOSE_DEG);
         
         // Physical Calculation (Gearbox logic)
         // Even though scale is 30s, actual movement matches 32s pace
@@ -144,7 +145,7 @@ void loop() {
 
       } else {
         // Stop Logic
-        Servo_MG996R.writeMicroseconds(SERVO_STOP_US);
+        Servo_MG996R.write(SERVO_STOP_DEG);
         
         static bool isPrinted = false;
         if(currentPos == 0 && !isPrinted){
@@ -158,7 +159,7 @@ void loop() {
     
     // Scene 3: IDLE 
     else {
-      Servo_MG996R.writeMicroseconds(SERVO_STOP_US);
+      Servo_MG996R.write(SERVO_STOP_DEG);
     }
 
     // Boundary Clamping
